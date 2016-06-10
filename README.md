@@ -13,9 +13,9 @@ This project has small backend made with NodeJS, Hapi, and SQLite and frontend w
    * index.js - The entry file that is executed to start the server.
    * www - The document root (static content wiil be served from here).
       * index.html - the HTML page that you will see in the browser.
-         * js - the JS files (compiled by webpack).
-            * commons.js - the shared libraries concatenated (and optionaly minified).
-            * index.js - the compiled application code (optionaly minified).
+      * js - the JS files (compiled by webpack).
+        * commons.js - the shared libraries concatenated (and optionaly minified).
+        * index.js - the compiled application code (optionaly minified).
    * tests
       * \*.js - tests for the backend
       * coverage.html - coverage report
