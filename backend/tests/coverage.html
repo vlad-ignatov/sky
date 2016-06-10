@@ -1,0 +1,3681 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Tests &amp; Coverage</title>
+    <script>
+      headings = [];
+    
+      onload = function () {
+          headings = document.querySelectorAll('h2');
+          reset();
+      };
+    
+      onscroll = function (e) {
+          var heading = find(window.scrollY);
+          if (!heading) {
+            var current = document.querySelector('#menu a.active');
+            if (current) {
+              current.className = '';
+            }
+            return;
+          }
+          var links = document.querySelectorAll('#menu a')
+                  , link;
+    
+          for (var i = 0, len = links.length; i < len; ++i) {
+              link = links[i];
+              link.className = link.getAttribute('href') == '#' + heading.id ? 'active' : '';
+          }
+      };
+    
+      function find (y) {
+          var i = headings.length
+                  , heading;
+    
+          while (i--) {
+              heading = headings[i];
+              if (y >= heading.offsetTop) {
+                  return heading;
+              }
+          }
+      }
+    
+      function toggle (className) {
+    
+          var elements = document.getElementsByClassName(className);
+    
+          for (var i = 0, il = elements.length; i < il; ++i) {
+              var element = elements[i];
+    
+              if (element.classList.contains('hide')) {
+                  element.classList.remove('hide');
+                  element.classList.add('show');
+              }
+              else {
+                  element.classList.remove('show');
+                  element.classList.add('hide');
+              }
+          };
+      }
+    
+      function reset () {
+    
+          var shownElements = document.getElementsByClassName('show');
+          var filterElements = document.querySelectorAll('input[type=checkbox]');
+    
+          for (var i = 0, il = filterElements.length; i < il; ++i) {
+              filterElements[i].checked = false;
+          }
+    
+          // Check any filters with visible elements
+          for (i = 0, il = shownElements.length; i < il; ++i) {
+              var shownElement = shownElements[i];
+              var classNames = shownElement.className.split(' ');
+              for (var ci = 0, cl = classNames.length; ci < cl; ++ci){
+                  var element = document.getElementById('show-' + classNames[ci]);
+                  if (element) {
+                      element.checked = true;
+                  }
+              }
+          }
+      };
+    
+      function filter (element) {
+    
+          toggle(element.value);
+          reset();
+      }
+    </script>
+    <style>
+        body {
+            font: 14px/1.6 Helvetica, Arial, sans-serif;
+            margin: 0;
+            color: #2c2c2c;
+        }
+    
+        #tests, #coverage, #linting {
+            padding: 60px;
+        }
+    
+        h1 a:hover {
+            text-decoration: none;
+        }
+    
+        h2 {
+            width: 80%;
+            margin-top: 80px;
+            margin-bottom: 0;
+            font-weight: 100;
+            letter-spacing: 1px;
+        }
+    
+        ul {
+            margin-top: 20px;
+            padding: 0 15px;
+            width: 100%;
+        }
+    
+        ul li {
+            float: left;
+            width: 40%;
+            margin-top: 5px;
+            margin-right: 60px;
+            list-style: none;
+            padding: 5px 0;
+            font-size: 12px;
+        }
+    
+        #menu {
+            position: fixed;
+            font-size: 12px;
+            overflow-y: auto;
+            top: 0;
+            right: 0;
+            margin: 0;
+            height: 100%;
+            padding: 15px 15px;
+            border-left: 1px solid #eee;
+            background-color: #666;
+            z-index: 1;
+        }
+    
+        #menu::after {
+            display: block;
+            content: '';
+            padding-top: 80px;
+        }
+    
+        #menu li a {
+            display: block;
+            color: white;
+            padding: 0 5px 0 35px;
+            transition: background 300ms;
+            text-decoration: none;
+        }
+    
+        #menu li {
+            position: relative;
+            list-style: none;
+        }
+    
+        #menu a:hover,
+        #menu a.active {
+            text-decoration: none;
+            background: rgba(255, 255, 255, .4);
+        }
+    
+        #menu li:hover .cov {
+            opacity: 1;
+        }
+    
+        #menu li .dirname {
+            opacity: .60;
+            padding-right: 2px;
+        }
+    
+        #menu li .basename {
+            opacity: 1;
+        }
+    
+        #menu .cov, #menu .lint {
+            background: rgba(0, 0, 0, .3);
+            position: absolute;
+            top: 0;
+            font-size: 9px;
+            text-align: center;
+            opacity: .8;
+            width: 22px;
+            border-radius: 10px;
+            padding: 2px 3px;
+        }
+    
+        #files .stats:nth-child(2n) {
+            display: inline-block;
+            margin-top: 15px;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    
+        .stats div {
+            float: left;
+            padding: 0 5px;
+        }
+    
+        .stats::after {
+            display: block;
+            content: '';
+            clear: both;
+        }
+    
+        .stats .sloc::after {
+            content: ' SLOC';
+            color: #b6b6b6;
+        }
+    
+        .stats .percentage::after {
+            content: ' coverage';
+            color: #b6b6b6;
+        }
+    
+        .stats .hits::before {
+            content: '(';
+            color: #b6b6b6;
+        }
+    
+        .stats .hits::after {
+            content: ' Covered';
+            color: #b6b6b6;
+        }
+    
+        .stats .misses::after {
+            content: ' Not Covered)';
+            color: #b6b6b6;
+        }
+    
+        .stats .failures::after {
+            content: ' Failures';
+            color: #b6b6b6;
+        }
+    
+        .stats .skipped::after {
+            content: ' Skipped';
+            color: #b6b6b6;
+        }
+    
+        .stats .test-count::after {
+            content: ' Tests';
+            color: #b6b6b6;
+        }
+    
+        .stats .duration::before {
+            content: '(';
+            color: #b6b6b6;
+        }
+    
+        .stats .duration::after {
+            content: ' ms)';
+            color: #b6b6b6;
+        }
+    
+        .high {
+            color: #00d4b4;
+        }
+    
+        .medium {
+            color: #e87d0d;
+        }
+    
+        .low {
+            color: #d4081a;
+        }
+    
+        .terrible {
+            color: #d4081a;
+            font-weight: bold;
+        }
+    
+        #files table {
+            width: 80%;
+            margin-top: 10px;
+            border-collapse: collapse;
+            border: 1px solid #cbcbcb;
+            color: #363636;
+            border-radius: 3px;
+        }
+    
+        #files thead {
+            display: none;
+        }
+    
+        table td.line,
+        table td.lint,
+        table td.hits {
+            width: 20px;
+            background: #eaeaea;
+            text-align: right;
+            font-size: 11px;
+            padding: 0 10px;
+            color: #949494;
+            white-space: nowrap;
+        }
+    
+        table td.hits {
+            width: 10px;
+            padding: 2px 5px;
+            color: rgba(0, 0, 0, .2);
+            background: #f0f0f0;
+        }
+    
+        table td.sourcemaps {
+            width: 1%;
+            border-left: 1px solid #cbcbcb;
+            padding: 0 10px;
+        }
+    
+        table td.lint.empty {
+            width: 0;
+            padding: 0;
+        }
+    
+        table td.lint > span {
+            border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            vertical-align: baseline;
+        }
+    
+        table td.lint .errors {
+            background-color: red;
+        }
+    
+        table td.lint .warnings {
+            background-color: orange;
+        }
+    
+        td.sourcemaps.file {
+            background: #f0f0f0;
+        }
+    
+        tr.miss td.line,
+        tr.miss td.hits {
+            background: #e6c3c7;
+        }
+    
+        tr.miss td {
+            background: #f8d5d8;
+        }
+    
+        td.source {
+            padding-left: 15px;
+            line-height: 15px;
+            white-space: pre;
+            font: 12px monaco, monospace;
+        }
+    
+        td.source div {
+            display: inline-block;
+        }
+    
+        td.source div.true {
+            background: #bae8bf;
+        }
+    
+        td.source div.false {
+            background: #e8e5ba;
+        }
+    
+        td.source div.never {
+            background: #f8d5d8;
+        }
+    
+        #tests table {
+            width: 80%;
+            margin-top: 10px;
+            border-collapse: collapse;
+            border: 1px solid #cbcbcb;
+            color: #363636;
+            border-radius: 3px;
+        }
+    
+        #tests thead {
+            background: #F5F5F5;
+        }
+    
+        #tests tr {
+            border: 1px solid #ccc;
+        }
+    
+        #tests td {
+            padding-left: 8px;
+            vertical-align: top;
+        }
+    
+        #tests .success:nth-child(2n) {
+            background: #F5F5F5;
+        }
+    
+        #tests .failure {
+            background: #FF9E9E;
+        }
+    
+        #tests table .skipped {
+            background: #AA82FF;
+        }
+    
+        #tests .success {
+            color: #949494;
+        }
+    
+        #tests .failure .test-title {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    
+        #tests .stack {
+            margin-top: 4px;
+            padding-left: 15px;
+            margin-bottom: 12px;
+            font: 12px monaco, monospace;
+            white-space: pre;
+            line-height: 15px;
+        }
+    
+        .hide {
+            position: absolute;
+            left: -9999em;
+        }
+    
+        .show {
+            position: relative;
+        }
+    
+        [data-tooltip] {
+            position: relative;
+        }
+    
+        [data-tooltip]:hover:before {
+            border: solid;
+            border-color: #333 transparent;
+            border-width: 6px 6px 0 6px;
+            bottom: 20px;
+            content: "";
+            left: 0;
+            position: absolute;
+            z-index: 99;
+        }
+    
+        [data-tooltip]:hover:after {
+            background: #333;
+            background: rgba(0, 0, 0, .8);
+            border-radius: 5px;
+            bottom: 26px;
+            color: #fff;
+            left: -10px;
+            padding: 5px 15px;
+            position: absolute;
+            z-index: 98;
+            content: attr(data-tooltip);
+            white-space: pre;
+            text-align: left;
+        }
+    
+        .line[data-tooltip]:hover:after {
+            content: "Line number";
+        }
+    
+        .hits[data-tooltip]:hover:after {
+            content: "Number of hits";
+        }
+    
+        .miss .source[data-tooltip]:hover:after {
+            content: "Missed line";
+        }
+    
+        .miss.true[data-tooltip]:hover:after {
+            content: "Condition always true";
+        }
+    
+        .miss.false[data-tooltip]:hover:after {
+            content: "Condition always false";
+        }
+    
+        .miss.never[data-tooltip]:hover:after {
+            content: "Statement never reached";
+        }
+    
+        .sourcemaps.file[data-tooltip]:hover:after {
+            content: "Original file";
+        }
+    
+        .sourcemaps.line[data-tooltip]:hover:after {
+            content: "Original line";
+        }
+    
+        .lint .errors[data-tooltip]:hover:after {
+            content: "Linting errors:\A" attr(data-tooltip);
+        }
+    
+        .lint .warnings[data-tooltip]:hover:after {
+            content: "Linting warnings:\A" attr(data-tooltip);
+        }
+    
+        #filters {
+            width: 75%;
+            margin-top: 25px;
+        }
+    
+        #filters label {
+            margin-right: 10px;
+        }
+    
+        .lint-stats .lint-errors::after {
+            content: ' linting errors';
+            color: #b6b6b6;
+        }
+    
+        .lint-stats .lint-warnings::after {
+            content: ' linting warnings';
+            color: #b6b6b6;
+        }
+    
+        .lint-entry {
+            color: #b6b6b6;
+            float: none;
+            padding: 0;
+        }
+    
+        .lint-entry .level-ERROR {
+            color: #d4081a;
+        }
+    
+        .lint-entry .level-WARNING {
+            color: #e87d0d;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="menu">
+        <li><a href="#tests">Test Report</a></li>
+        <li><a href="#coverage">Coverage Report</a></li>
+        <li>
+            <span class="cov high">84.21</span>
+            <a href="#backend/index.js"><span class="dirname">backend/</span><span class="basename">index.js</span></a>
+        </li>
+        <li>
+            <span class="cov high">94.74</span>
+            <a href="#backend/controllers/CatalogueService.js"><span class="dirname">backend/controllers/</span><span class="basename">CatalogueService.js</span></a>
+        </li>
+        <li>
+            <span class="cov high">93.94</span>
+            <a href="#backend/controllers/CustomerLocationService.js"><span class="dirname">backend/controllers/</span><span class="basename">CustomerLocationService.js</span></a>
+        </li>
+        <li>
+            <span class="cov high">95.83</span>
+            <a href="#backend/controllers/Order.js"><span class="dirname">backend/controllers/</span><span class="basename">Order.js</span></a>
+        </li>
+        <li>
+            <span class="cov high">100</span>
+            <a href="#backend/controllers/Static.js"><span class="dirname">backend/controllers/</span><span class="basename">Static.js</span></a>
+        </li>
+        <li>
+            <span class="cov high">96.88</span>
+            <a href="#backend/db/index.js"><span class="dirname">backend/db/</span><span class="basename">index.js</span></a>
+        </li>
+        <li>
+            <span class="cov high">96.23</span>
+            <a href="#backend/tests/CatalogueService.js"><span class="dirname">backend/tests/</span><span class="basename">CatalogueService.js</span></a>
+        </li>
+        <li>
+            <span class="cov high">95.35</span>
+            <a href="#backend/tests/ConfirmationPage.js"><span class="dirname">backend/tests/</span><span class="basename">ConfirmationPage.js</span></a>
+        </li>
+        <li>
+            <span class="cov high">97.01</span>
+            <a href="#backend/tests/LocationService.js"><span class="dirname">backend/tests/</span><span class="basename">LocationService.js</span></a>
+        </li>
+        <li><a href="#linting">Linting Report</a></li>
+    </div>
+    <div id="tests">
+      <h1>Test Report</h1>
+      <div class="stats high">
+          <div class="failures">0</div>
+          <div class="skipped">0</div>
+          <div class="test-count">8</div>
+          <div class="duration">642</div>
+      </div>
+      <div id="filters">
+          <input type="checkbox" checked="" onchange="filter(this)" value="success" id="show-success"><label for="show-success">Show Success</label></input>
+          <input type="checkbox" checked="" onchange="filter(this)" value="failure" id="show-failure"><label for="show-failure">Show Failure</label></input>
+          <br>
+          <input type="checkbox" checked="" onchange="filter(this)" value="Catalogue_Service:_" id="show-Catalogue_Service:_"><label for="show-Catalogue_Service:_">Catalogue Service: </label></input>
+          <input type="checkbox" checked="" onchange="filter(this)" value="Confirmation_Page:_" id="show-Confirmation_Page:_"><label for="show-Confirmation_Page:_">Confirmation Page: </label></input>
+          <input type="checkbox" checked="" onchange="filter(this)" value="Customer_Location_Service:_" id="show-Customer_Location_Service:_"><label for="show-Customer_Location_Service:_">Customer Location Service: </label></input>
+      </div>
+      <table>
+          <thead>
+          <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Duration (ms)</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr class="show Catalogue_Service:_ success">
+              <td class="test-id">1</td>
+              <td class="test-title">Catalogue Service:  works correctly without locationID
+                  
+              </td>
+              <td class="test-duration">28</td>
+          </tr>
+          <tr class="show Catalogue_Service:_ success">
+              <td class="test-id">2</td>
+              <td class="test-title">Catalogue Service:  works correctly for LONDON
+                  
+              </td>
+              <td class="test-duration">11</td>
+          </tr>
+          <tr class="show Catalogue_Service:_ success">
+              <td class="test-id">3</td>
+              <td class="test-title">Catalogue Service:  works correctly for LIVERPOOL
+                  
+              </td>
+              <td class="test-duration">2</td>
+          </tr>
+          <tr class="show Confirmation_Page:_ success">
+              <td class="test-id">4</td>
+              <td class="test-title">Confirmation Page:  throws without customerID
+                  
+              </td>
+              <td class="test-duration">5</td>
+          </tr>
+          <tr class="show Confirmation_Page:_ success">
+              <td class="test-id">5</td>
+              <td class="test-title">Confirmation Page:  responds with the products (because it&#x27;s a stub)
+                  
+              </td>
+              <td class="test-duration">3</td>
+          </tr>
+          <tr class="show Customer_Location_Service:_ success">
+              <td class="test-id">6</td>
+              <td class="test-title">Customer Location Service:  works with valid customerID and returns locationID
+                  
+              </td>
+              <td class="test-duration">3</td>
+          </tr>
+          <tr class="show Customer_Location_Service:_ success">
+              <td class="test-id">7</td>
+              <td class="test-title">Customer Location Service:  returns an error for invalid customerID
+                  
+              </td>
+              <td class="test-duration">3</td>
+          </tr>
+          <tr class="show Customer_Location_Service:_ success">
+              <td class="test-id">8</td>
+              <td class="test-title">Customer Location Service:  returns an error for missing customerID
+                  
+              </td>
+              <td class="test-duration">1</td>
+          </tr>
+          </tbody>
+      </table>
+    
+    </div>    <div id="coverage">
+        <h1>Code Coverage Report</h1>
+        <div class="stats high">
+            <div class="percentage">94.10%</div>
+            <div class="sloc">407</div>
+            <div class="hits">383</div>
+            <div class="misses">24</div>
+        </div>
+        <div id="files">
+            <div class="file">
+                <h2 id="backend/index.js">backend/index.js</h2>
+                <div class="stats high">
+                    <div class="percentage">84.21%</div>
+                    <div class="sloc">76</div>
+                    <div class="hits">64</div>
+                    <div class="misses">12</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>1</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">require(&#x27;colors&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>2</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>3</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var Hapi             &#x3D; require(&#x27;hapi&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>4</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var requireDirectory &#x3D; require(&#x27;require-directory&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>5</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var debug            &#x3D; require(&#x27;debug&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>6</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var Util             &#x3D; require(&#x27;util&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>7</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var Path             &#x3D; require(&#x27;path&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>8</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var Inert            &#x3D; require(&#x27;inert&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>9</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>10</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var debugLog   &#x3D; debug(&#x27;app:log&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>11</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">debugLog.log   &#x3D; console.log.bind(console);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>12</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>13</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>var ENV &#x3D; </div><div class="miss true" data-tooltip>process.env.NODE_ENV</div><div> || </div><div class="miss never" data-tooltip>&quot;production&quot;</div></td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>14</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var CFG &#x3D; {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>15</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    connections: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>16</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        routes: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>17</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            files: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>18</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                relativeTo: Path.join(__dirname, &#x27;www/&#x27;)</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>19</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            },</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>20</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            cors: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>21</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                credentials: true</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>22</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>23</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>24</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    },</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>25</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>    debug: </div><div class="miss false" data-tooltip>ENV &#x3D;&#x3D; &quot;development&quot;</div><div> ? </div><div class="miss never" data-tooltip>{</div></td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>26</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        log    : [&#x27;error&#x27;],</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>27</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        request: [&#x27;error&#x27;]</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>28</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div class="miss never" data-tooltip>    }</div><div> : false</div></td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>29</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">};</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>30</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>31</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var server &#x3D; new Hapi.Server(CFG);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>32</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>33</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// Define the main connection</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>34</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">server.connection({</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>35</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>    port   : </div><div class="miss true" data-tooltip>process.env.PORT</div><div> || </div><div class="miss never" data-tooltip>3210</div><div>,</div></td>
+                            </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>36</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>    host   : </div><div class="miss false" data-tooltip>process.env.HOST</div><div> || &quot;0.0.0.0&quot;,</div></td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>37</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    labels : &quot;main&quot;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>38</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">});</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>39</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>40</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// Make the server to expect and parse the &quot;customerID&quot; cookie</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>41</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">server.state(&#x27;customerID&#x27;, {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>42</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    isHttpOnly: false, // to read it from JS</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>43</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    ignoreErrors: true, // errors are ignored and treated as missing cookies.</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>44</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    path: &quot;/&quot;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>45</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">});</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>46</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>47</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">server.register(Inert, function(err) {</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>48</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>    if (</div><div class="miss false" data-tooltip>err</div><div>) {</div></td>
+                            </tr>
+                            <tr class="miss">
+                                <td class="line" data-tooltip>49</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source" data-tooltip>        throw err;</td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>50</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>51</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>52</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    // Load all controllers (to extend the system just define new controllers in</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>53</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    // the controllers directory)</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>54</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">    debugLog(&#x27;Loading controllers...&#x27;.bold);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>55</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">    var controllers &#x3D; requireDirectory(module, __dirname + &quot;/controllers&quot;), ctl;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>56</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">    for ( var ctlName in controllers ) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>57</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>4</td>
+                            <td class="source">        ctl &#x3D; controllers[ctlName];</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>58</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>        if (</div><div class="miss true" data-tooltip>typeof ctl.register &#x3D;&#x3D; &quot;function&quot;</div><div>) {</div></td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>59</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>4</td>
+                            <td class="source">            var msg &#x3D; &quot;• Register controller from %s/controllers/%s...&quot;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>60</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>4</td>
+                            <td class="source">            try {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>61</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>4</td>
+                            <td class="source">                ctl.register(server);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>62</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>4</td>
+                            <td class="source">                msg +&#x3D; &#x27; OK&#x27;.bold.green</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>63</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            } catch (ex) {</td>
+                        </tr>
+                            <tr class="miss">
+                                <td class="line" data-tooltip>64</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source" data-tooltip>                msg +&#x3D; &#x27; Failed&#x27;.bold.red</td>
+                            </tr>
+                            <tr class="miss">
+                                <td class="line" data-tooltip>65</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source" data-tooltip>                msg +&#x3D; &#x27;\n&#x27; + ex.stack.red</td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>66</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>67</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>4</td>
+                            <td class="source">            debugLog(Util.format(msg, __dirname, ctlName).magenta);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>68</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>69</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>70</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>71</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    // Finally start the server</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>72</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">    server.start(function(error) {</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>73</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>        if (</div><div class="miss false" data-tooltip>error</div><div>) {</div></td>
+                            </tr>
+                            <tr class="miss">
+                                <td class="line" data-tooltip>74</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source" data-tooltip>            throw error;</td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>75</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>76</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">        console.log(Util.format(</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>77</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            &quot;Server running at: %s %s%s&quot;.white.bold.blueBG,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>78</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            server.info.uri,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>79</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            (&quot; PID: &quot; + process.pid + &quot; &quot;).greenBG.blue,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>80</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            (&quot; ENV: &quot; + ENV + &quot; &quot;).redBG</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>81</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        ));</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>82</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>83</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>84</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">});</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>85</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>86</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// export the server to make it testable</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>87</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">module.exports &#x3D; server;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>88</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="file">
+                <h2 id="backend/controllers/CatalogueService.js">backend/controllers/CatalogueService.js</h2>
+                <div class="stats high">
+                    <div class="percentage">94.74%</div>
+                    <div class="sloc">19</div>
+                    <div class="hits">18</div>
+                    <div class="misses">1</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>1</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var db &#x3D; require(&#x27;../db/index.js&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>2</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>3</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// The CatalogueService will only return ArsenalTV and ChelseaTV if the locationID is LONDON.</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>4</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// The CatalogueService will only return LiverpoolTV if the locationID is LIVERPOOL.</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>5</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// The CatalogueService will always return Sky News and Sky Sports News.</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>6</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">exports.register &#x3D; function(server) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>7</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    server.route({</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>8</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        method: &#x27;GET&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>9</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        path  : &#x27;/api/v1/services/catalogue&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>10</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        config: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>11</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            tags       : [ &#x27;api&#x27;, &#x27;services&#x27;, &#x27;CatalogueService&#x27; ],</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>12</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            description: &#x27;Returns list of products depending on the customer’s location.&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>13</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            handler(request, reply) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>14</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                db.getProducts(request.query.locationID, function(err, results) {</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>15</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>                    reply(</div><div class="miss false" data-tooltip>err</div><div> || results);</div></td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>16</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>17</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>18</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>19</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>20</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">};</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>21</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="file">
+                <h2 id="backend/controllers/CustomerLocationService.js">backend/controllers/CustomerLocationService.js</h2>
+                <div class="stats high">
+                    <div class="percentage">93.94%</div>
+                    <div class="sloc">33</div>
+                    <div class="hits">31</div>
+                    <div class="misses">2</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>1</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var Boom &#x3D; require(&quot;boom&quot;)</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>2</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var db   &#x3D; require(&#x27;../db/index.js&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>3</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>4</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var ERR_MISSING_CUSTOMER_ID &#x3D; &quot;This service is not available for you ( missing customerID )&quot;;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>5</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var ERR_INVALID_CUSTOMER_ID &#x3D; &quot;This service is not available for you ( invalid customerID )&quot;;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>6</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>7</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">exports.register &#x3D; function(server) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>8</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    server.route({</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>9</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        method: &#x27;POST&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>10</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        path  : &#x27;/api/v1/services/customer-location&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>11</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        config: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>12</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            tags       : [ &#x27;api&#x27;, &#x27;services&#x27;, &#x27;CustomerLocationService&#x27; ],</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>13</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            description: &#x27;The Customer Location Service will be called to get the customer’s location.&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>14</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            notes      : &#x27;Takes the customerID from the &quot;customerID&quot; cookie.&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>15</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            handler(request, reply) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>16</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                var customerID &#x3D; request.state.customerID;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>17</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>3</td>
+                            <td class="source">                if (!customerID) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>18</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">                    return reply(Boom.unauthorized(ERR_MISSING_CUSTOMER_ID));</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>19</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>20</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>21</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>2</td>
+                            <td class="source">                db.getLocationID(customerID, function(err, row) {</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>22</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>                    if (</div><div class="miss false" data-tooltip>err</div><div>) {</div></td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>23</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                        // Boom will catch it and generate error 500 json response</td>
+                        </tr>
+                            <tr class="miss">
+                                <td class="line" data-tooltip>24</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source" data-tooltip>                        return reply(err);</td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>25</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                    }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>26</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>27</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>2</td>
+                            <td class="source">                    if (!row) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>28</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">                        return reply(Boom.unauthorized(ERR_INVALID_CUSTOMER_ID));</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>29</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                    }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>30</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>31</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                    // Reply with an id token - we can afford to respond with</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>32</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                    // plain text here which is better for performance...</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>33</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">                    reply(row.locationID).type(&quot;text/plain&quot;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>34</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                })</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>35</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>36</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>37</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>38</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">};</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>39</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="file">
+                <h2 id="backend/controllers/Order.js">backend/controllers/Order.js</h2>
+                <div class="stats high">
+                    <div class="percentage">95.83%</div>
+                    <div class="sloc">24</div>
+                    <div class="hits">23</div>
+                    <div class="misses">1</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>1</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">/**</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>2</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"> * This is just a stub acting as backend for the order page. It requires that</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>3</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"> * customerID cookie is present and if so - replies with whatever was sent in</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>4</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"> * the POST body (which is expected to be JSON array).</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>5</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"> */</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>6</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">exports.register &#x3D; function(server) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>7</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    server.route({</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>8</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        method: &#x27;POST&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>9</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        path  : &#x27;/api/v1/order&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>10</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        config: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>11</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            tags       : [ &#x27;api&#x27; ],</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>12</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            description: &#x27;Simple echo of the POST payload. Requires customerID cookie...&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>13</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            handler(request, reply) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>14</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>15</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                // The client is required provide a customerID. Note that</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>16</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                // here we don&#x27;t check if it is for valid existing user.</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>17</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                if (!request.state.customerID) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>18</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">                    return reply(new Error(&quot;Missing customerID&quot;));</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>19</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>20</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>21</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                // just reply with whatever we have received</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>22</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>                reply(</div><div class="miss true" data-tooltip>request.payload</div><div> || </div><div class="miss never" data-tooltip>[]</div><div>);</div></td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>23</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>24</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>25</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>26</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">};</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>27</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="file">
+                <h2 id="backend/controllers/Static.js">backend/controllers/Static.js</h2>
+                <div class="stats high">
+                    <div class="percentage">100%</div>
+                    <div class="sloc">28</div>
+                    <div class="hits">28</div>
+                    <div class="misses">0</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>1</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">/**</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>2</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"> * Routes for the static files</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>3</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"> */</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>4</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">exports.register &#x3D; function(server) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>5</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>6</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    // Everything within the &quot;/js&quot; filder</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>7</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    server.route({</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>8</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        method : &quot;GET&quot;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>9</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        path   : &quot;/js/{path*}&quot;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>10</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        config : {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>11</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            handler: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>12</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                directory: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>13</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                    path   : &quot;js&quot;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>14</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                    listing: true,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>15</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                    index  : true</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>16</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>17</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>18</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>19</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>20</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>21</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    // Everything else (except for the routes registered elsewhere) is mapped</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>22</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    // to &quot;/index.html&quot;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>23</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">    server.route({</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>24</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        method : &quot;GET&quot;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>25</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        path   : &quot;/{path*}&quot;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>26</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        handler: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>27</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            file : &quot;index.html&quot;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>28</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>29</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>30</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">};</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>31</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="file">
+                <h2 id="backend/db/index.js">backend/db/index.js</h2>
+                <div class="stats high">
+                    <div class="percentage">96.88%</div>
+                    <div class="sloc">64</div>
+                    <div class="hits">62</div>
+                    <div class="misses">2</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>1</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var sqlite3 &#x3D; require(&#x27;sqlite3&#x27;).verbose();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>2</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var debug   &#x3D; require(&#x27;debug&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>3</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>4</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// Note that DB is practically a singleton private instance</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>5</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var DB &#x3D; new sqlite3.Database(__dirname + &quot;/db.sqlite&quot;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>6</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>7</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var log &#x3D; debug(&#x27;app:db&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>8</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var dbg &#x3D; debug(&#x27;app:db:error&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>9</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">dbg.log &#x3D; console.error.bind(console);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>10</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>11</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// Log SQL queries if enabled</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>12</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">DB.on(&#x27;trace&#x27;, function(sql) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>13</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    log(sql);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>14</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">});</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>15</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>16</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// wrap callbacks with a function that will log errors to STDERR if the DEBUG</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>17</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// env var is set to something like &quot;app:db&quot;, &quot;app:*&quot;, &quot;*&quot;...</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>18</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">function createCallback(fn) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>19</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>5</td>
+                            <td class="source">    return function(error, result) {</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>20</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>        if (</div><div class="miss false" data-tooltip>error</div><div>) {</div></td>
+                            </tr>
+                            <tr class="miss">
+                                <td class="line" data-tooltip>21</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source" data-tooltip>            dbg(error);</td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>22</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>23</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>5</td>
+                            <td class="source">        fn(error, result)</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>24</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    };</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>25</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">}</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>26</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>27</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">module.exports &#x3D; {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>28</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>29</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    /**</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>30</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     * Should fetch products that match the given locationID or that don&#x27;t have</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>31</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     * locationID specified.</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>32</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     * @param  {String}   locationID</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>33</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     * @param  {Function} callback error-first callback. If there is no error,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>34</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     *                             the second argument should be an array with</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>35</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     *                             0 or more objects representing the selected</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>36</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     *                             rows.</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>37</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     * @return {void}</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>38</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     */</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>39</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    getProducts(locationID, callback) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>40</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        DB.all(</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>41</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            &quot;SELECT products.name AS product, &quot; +</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>42</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            &quot;       categories.name AS category, &quot; +</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>43</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            &quot;       locations.name AS locationID &quot; +</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>44</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            &quot;FROM products &quot; +</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>45</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            &quot;    LEFT JOIN categories ON (categories.id &#x3D; products.category_id) &quot; +</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>46</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            &quot;    LEFT JOIN locations ON (locations.id &#x3D; products.location_id) &quot; +</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>47</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            &quot;WHERE locations.name &#x3D; ? OR products.location_id ISNULL&quot;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>48</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            [ locationID ],</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>49</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            createCallback(callback)</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>50</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        );</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>51</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    },</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>52</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>53</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    /**</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>54</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     * Should fetch the locationID for the given customerID.</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>55</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     * @param  {String}   customerID</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>56</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     * @param  {Function} callback error-first callback. If there is no error,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>57</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     *                             the second argument should be an object like</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>58</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     *                             { &quot;locationID&quot;: &quot;whatever&quot; }. IIf there is no</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>59</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     *                             match the value will be undefined.</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>60</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     * @return {void}</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>61</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">     */</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>62</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    getLocationID(customerID, callback) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>63</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        DB.get(</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>64</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            &quot;SELECT name AS locationID FROM locations WHERE locations.id IN ( &quot; +</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>65</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            &quot;    SELECT locationID FROM customers WHERE customerID &#x3D; ? &quot; +</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>66</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            &quot;)&quot;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>67</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            [ customerID ],</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>68</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            createCallback(callback)</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>69</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        );</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>70</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>71</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">};</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>72</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="file">
+                <h2 id="backend/tests/CatalogueService.js">backend/tests/CatalogueService.js</h2>
+                <div class="stats high">
+                    <div class="percentage">96.23%</div>
+                    <div class="sloc">53</div>
+                    <div class="hits">51</div>
+                    <div class="misses">2</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>1</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var chai     &#x3D; require(&#x27;chai&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>2</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var Lab      &#x3D; require(&#x27;lab&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>3</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var server   &#x3D; require(&#x27;../index.js&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>4</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var lab      &#x3D; exports.lab &#x3D; Lab.script();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>5</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var describe &#x3D; lab.describe;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>6</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var it       &#x3D; lab.it;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>7</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var expect   &#x3D; chai.expect;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>8</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>9</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var SERVICE_PATH &#x3D; &quot;/api/v1/services/catalogue&quot;;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>10</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>11</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// Wait for the srver to start before running the tests (if this happens to be</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>12</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// the first test)</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>13</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">lab.before(function(next) {</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>14</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>    if (</div><div class="miss true" data-tooltip>server.info.started</div><div>) {</div></td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>15</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">        setImmediate(next);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>16</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>17</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    else {</td>
+                        </tr>
+                            <tr class="miss">
+                                <td class="line" data-tooltip>18</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source" data-tooltip>        server.once(&quot;start&quot;, next);</td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>19</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>20</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">});</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>21</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>22</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>23</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">describe(&#x27;Catalogue Service: &#x27;, function() {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>24</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>25</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    it (&#x27;works correctly without locationID&#x27;, function(next) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>26</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        server.inject(SERVICE_PATH, function(response) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>27</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            expect(response.statusCode).to.equal(200);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>28</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            expect(JSON.parse(response.payload)).to.deep.equal([</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>29</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                { category: &quot;News&quot;  , product: &quot;Sky News&quot;        , locationID: null },</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>30</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                { category: &quot;News&quot;  , product: &quot;Sky Sports News&quot; , locationID: null }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>31</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            ]);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>32</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            next();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>33</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>34</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>35</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>36</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">    it (&#x27;works correctly for LONDON&#x27;, function(next) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>37</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        server.inject(SERVICE_PATH + &quot;?locationID&#x3D;LONDON&quot;, function(response) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>38</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            expect(response.statusCode).to.equal(200);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>39</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            expect(JSON.parse(response.payload)).to.deep.equal([</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>40</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                { category: &quot;Sports&quot;, product: &quot;Arsenal TV&quot;     , locationID: &quot;LONDON&quot; },</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>41</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                { category: &quot;Sports&quot;, product: &quot;Chelsea TV&quot;     , locationID: &quot;LONDON&quot; },</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>42</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                { category: &quot;News&quot;  , product: &quot;Sky News&quot;       , locationID: null     },</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>43</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                { category: &quot;News&quot;  , product: &quot;Sky Sports News&quot;, locationID: null     }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>44</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            ]);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>45</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            next();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>46</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>47</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>48</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>49</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">    it (&#x27;works correctly for LIVERPOOL&#x27;, function(next) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>50</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        server.inject(SERVICE_PATH + &quot;?locationID&#x3D;LIVERPOOL&quot;, function(response) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>51</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            expect(response.statusCode).to.equal(200);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>52</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            expect(JSON.parse(response.payload)).to.deep.equal([</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>53</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                { category: &quot;Sports&quot;, product: &quot;Liverpool TV&quot;   , locationID: &quot;LIVERPOOL&quot; },</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>54</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                { category: &quot;News&quot;  , product: &quot;Sky News&quot;       , locationID: null        },</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>55</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                { category: &quot;News&quot;  , product: &quot;Sky Sports News&quot;, locationID: null        }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>56</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            ]);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>57</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            next();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>58</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>59</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>60</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>61</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">});</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>62</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="file">
+                <h2 id="backend/tests/ConfirmationPage.js">backend/tests/ConfirmationPage.js</h2>
+                <div class="stats high">
+                    <div class="percentage">95.35%</div>
+                    <div class="sloc">43</div>
+                    <div class="hits">41</div>
+                    <div class="misses">2</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>1</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var chai     &#x3D; require(&#x27;chai&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>2</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var Lab      &#x3D; require(&#x27;lab&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>3</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var server   &#x3D; require(&#x27;../index.js&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>4</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var lab      &#x3D; exports.lab &#x3D; Lab.script();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>5</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var describe &#x3D; lab.describe;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>6</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var it       &#x3D; lab.it;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>7</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var expect   &#x3D; chai.expect;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>8</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>9</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var PATH &#x3D; &quot;/api/v1/order&quot;;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>10</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>11</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// Wait for the srver to start before running the tests (if this happens to be</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>12</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// the first test)</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>13</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">lab.before(function(next) {</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>14</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>    if (</div><div class="miss true" data-tooltip>server.info.started</div><div>) {</div></td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>15</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">        setImmediate(next);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>16</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>17</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    else {</td>
+                        </tr>
+                            <tr class="miss">
+                                <td class="line" data-tooltip>18</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source" data-tooltip>        server.once(&quot;start&quot;, next);</td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>19</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>20</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">});</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>21</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>22</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>23</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">describe(&#x27;Confirmation Page: &#x27;, function() {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>24</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>25</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    it (&#x27;throws without customerID&#x27;, function(next) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>26</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        server.inject({</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>27</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            url: PATH,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>28</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            method: &#x27;POST&#x27;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>29</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }, function(response) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>30</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            expect(response.statusCode).to.equal(500);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>31</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            next();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>32</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>33</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>34</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>35</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">    it (&#x27;responds with the products (because it\&#x27;s a stub)&#x27;, function(next) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>36</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        server.inject({</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>37</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            url: PATH,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>38</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            method: &#x27;POST&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>39</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            headers: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>40</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                Cookie: &quot;customerID&#x3D;london_user&quot;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>41</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            },</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>42</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            payload: [ &quot;a&quot;, &quot;b&quot; ]</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>43</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }, function(response) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>44</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            expect(response.statusCode).to.equal(200);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>45</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            expect(response.payload).to.equal(&#x27;[&quot;a&quot;,&quot;b&quot;]&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>46</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            next();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>47</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>48</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>49</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>50</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">});</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>51</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="file">
+                <h2 id="backend/tests/LocationService.js">backend/tests/LocationService.js</h2>
+                <div class="stats high">
+                    <div class="percentage">97.01%</div>
+                    <div class="sloc">67</div>
+                    <div class="hits">65</div>
+                    <div class="misses">2</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>1</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// A CustomerLocationService is available which will take the customerID as an</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>2</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// input and return one of the following outputs.</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>3</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">//</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>4</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// 1. A location identifier Customer is valid and a locationID is returned</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>5</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// 2. Failure exception There was a problem retrieving the customer information</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>6</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">//</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>7</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// 􀀀You are required to provide a stub of the CustomerLocationService interface.</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>8</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var chai     &#x3D; require(&#x27;chai&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>9</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var Lab      &#x3D; require(&#x27;lab&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>10</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var server   &#x3D; require(&#x27;../index.js&#x27;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>11</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var lab      &#x3D; exports.lab &#x3D; Lab.script();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>12</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var describe &#x3D; lab.describe;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>13</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var it       &#x3D; lab.it;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>14</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var expect   &#x3D; chai.expect;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>15</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>16</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">var SERVICE_PATH &#x3D; &quot;/api/v1/services/customer-location&quot;;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>17</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>18</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">// Wait for the srver to start before running the tests</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>19</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">lab.before(function(next) {</td>
+                        </tr>
+                            <tr class="chunks">
+                                <td class="line" data-tooltip>20</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source"><div>    if (</div><div class="miss true" data-tooltip>server.info.started</div><div>) {</div></td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>21</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">        setImmediate(next);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>22</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>23</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    else {</td>
+                        </tr>
+                            <tr class="miss">
+                                <td class="line" data-tooltip>24</td>
+                                <td class="lint empty"></td>
+                                <td class="hits" data-tooltip></td>
+                                <td class="source" data-tooltip>        server.once(&quot;start&quot;, next);</td>
+                            </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>25</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>26</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">});</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>27</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>28</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>29</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">describe(&#x27;Customer Location Service: &#x27;, function() {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>30</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>31</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    // A location identifier Customer is valid and a locationID is returned</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>32</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    it (&#x27;works with valid customerID and returns locationID&#x27;, function(next) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>33</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        server.inject({</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>34</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            method: &quot;POST&quot;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>35</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            url   : SERVICE_PATH,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>36</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            headers: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>37</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                Cookie: &quot;customerID&#x3D;london_user&quot;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>38</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>39</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        }, function(response) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>40</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            // console.log(response)</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>41</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>42</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            expect(response.statusCode).to.equal(200);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>43</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            // expect(response.headers[&#x27;set-cookie&#x27;]).to.deep.equal([ &#x27;customerID&#x3D;london_user&#x27; ]);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>44</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            expect(response.payload).to.equal(&quot;LONDON&quot;);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>45</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            next();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>46</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>47</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>48</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>49</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>50</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    // Failure exception There was a problem retrieving the customer information</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>51</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">    it (&#x27;returns an error for invalid customerID&#x27;, function(next) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>52</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        server.inject({</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>53</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            method : &#x27;POST&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>54</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            url    : SERVICE_PATH,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>55</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            headers: {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>56</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">                Cookie: &quot;customerID&#x3D;nobody&quot;</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>57</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            }</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>58</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        },</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>59</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        function(response) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>60</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            expect(response.statusCode).to.equal(401);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>61</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            next();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>62</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>63</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>64</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>65</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    // Failure exception There was a problem retrieving the customer information</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>66</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">    it (&#x27;returns an error for missing customerID&#x27;, function(next) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>67</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        server.inject({</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>68</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            method : &#x27;POST&#x27;,</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>69</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            url    : SERVICE_PATH</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>70</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        },</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>71</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        function(response) {</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>72</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">            expect(response.statusCode).to.equal(401);</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>73</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip>1</td>
+                            <td class="source">            next();</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>74</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">        });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>75</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">    });</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>76</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>77</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source">});</td>
+                        </tr>
+                        <tr class="hit">
+                            <td class="line" data-tooltip>78</td>
+                            <td class="lint empty"></td>
+                            <td class="hits" data-tooltip></td>
+                            <td class="source"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>    <div id="linting">
+        <h1>Linting Report</h1>
+            <span>Nothing to show here, linting is disabled.</span>
+    </div>  </body>
+</html>

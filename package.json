@@ -1,0 +1,50 @@
+{
+  "name": "sky",
+  "version": "0.0.1",
+  "description": "SKY TECHNOLOGY UNATTENDED PROGRAMMING TEST",
+  "main": "index.js",
+  "scripts": {
+    "test": "NODE_ENV=test ./node_modules/lab/bin/lab -v -t 90 -r console -o stdout -r html -o backend/tests/coverage.html backend/tests",
+    "dev": "node ./node_modules/webpack/bin/webpack.js -w",
+    "test:frontend": "node ./node_modules/karma/bin/karma start"
+  },
+  "author": "vlad.gnatov@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "babel": "^6.5.2",
+    "babel-core": "^6.9.1",
+    "babel-eslint": "^6.0.4",
+    "babel-loader": "^6.2.4",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-react": "^6.5.0",
+    "babel-preset-stage-0": "^6.5.0",
+    "boom": "^3.2.1",
+    "colors": "^1.1.2",
+    "debug": "^2.2.0",
+    "eslint": "^2.11.1",
+    "hapi": "^13.4.1",
+    "if-env": "^1.0.0",
+    "inert": "^4.0.0",
+    "jquery": "^2.2.4",
+    "react": "^15.1.0",
+    "react-dom": "^15.1.0",
+    "react-redux": "^4.4.5",
+    "redux": "^3.5.2",
+    "redux-thunk": "^2.1.0",
+    "require-directory": "^2.1.1",
+    "sqlite3": "^3.1.4",
+    "webpack": "^1.13.1"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "karma": "^0.13.22",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-mocha": "^1.0.1",
+    "karma-mocha-reporter": "^2.0.3",
+    "karma-webpack": "^1.7.0",
+    "lab": "^10.7.1",
+    "mocha": "^2.5.3",
+    "react-addons-test-utils": "^15.1.0"
+  }
+}
