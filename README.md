@@ -39,9 +39,9 @@ This project has small backend made with NodeJS, Hapi, and SQLite and frontend w
 
 **Short version:**
 ```sh
-git colone https://github.com/vlad-ignatov/sky.git
+git clone https://github.com/vlad-ignatov/sky.git
 cd sky
-npm install
+npm i
 node backend
 ```
 
