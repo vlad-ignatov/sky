@@ -1,9 +1,8 @@
-# To run the tests
----
-To run the tests:
+## To run the tests:
 
 ```sh
-cd /the/path/...
+git clone https://github.com/vlad-ignatov/sky.git -b pairing_exercise
+cd sky
 npm i
 npm test
 ```
