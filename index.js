@@ -4,7 +4,6 @@ var Hapi             = require('hapi');
 var requireDirectory = require('require-directory');
 var debug            = require('debug');
 var Util             = require('util');
-var Path             = require('path');
 var Inert            = require('inert');
 
 var debugLog   = debug('app:log');
@@ -12,16 +11,6 @@ debugLog.log   = console.log.bind(console);
 
 var ENV = process.env.NODE_ENV || "production"
 var CFG = {
-    connections: {
-        routes: {
-            files: {
-                relativeTo: Path.join(__dirname, 'www/')
-            },
-            cors: {
-                credentials: true
-            }
-        }
-    },
     debug: ENV == "development" ? {
         log    : ['error'],
         request: ['error']
@@ -35,13 +24,6 @@ server.connection({
     port   : process.env.PORT || 3210,
     host   : process.env.HOST || "0.0.0.0",
     labels : "main"
-});
-
-// Make the server to expect and parse the "customerID" cookie
-server.state('customerID', {
-    isHttpOnly: false, // to read it from JS
-    ignoreErrors: true, // errors are ignored and treated as missing cookies.
-    path: "/"
 });
 
 server.register(Inert, function(err) {
@@ -80,7 +62,6 @@ server.register(Inert, function(err) {
             (" ENV: " + ENV + " ").redBG
         ));
     });
-
 });
 
 // export the server to make it testable
